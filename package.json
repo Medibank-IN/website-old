@@ -1,0 +1,41 @@
+{
+  "name": "medi-log",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emailjs/browser": "^4.4.1",
+    "@emailjs/nodejs": "^5.0.2",
+    "@radix-ui/react-slot": "^1.1.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "d3": "^7.9.0",
+    "dotenv": "^16.4.7",
+    "embla-carousel-react": "^8.2.0",
+    "framer-motion": "^11.11.17",
+    "google-auth-library": "^9.15.1",
+    "google-spreadsheet": "^4.1.4",
+    "lucide-react": "^0.429.0",
+    "next": "14.2.5",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-hook-form": "^7.54.2",
+    "react-icons": "^5.3.0",
+    "react-simple-maps": "^3.0.0",
+    "react-spring": "^9.7.4",
+    "react-tooltip": "^5.28.0",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
+  }
+}
