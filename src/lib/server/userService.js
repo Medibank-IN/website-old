@@ -13,49 +13,14 @@ const HEADER_VALUES = [
   "city",
   "referralCode",
   "paymentStatus",
-  "paymentReference",
   "mid",
   "createdAt",
   "updatedAt",
 ];
 
-const STATE_CODE_MAP = {
-  "Andhra Pradesh": "51",
-  "Arunachal Pradesh": "79",
-  Assam: "78",
-  Bihar: "80",
-  Chhattisgarh: "49",
-  Goa: "40",
-  Gujarat: "36",
-  Haryana: "12",
-  "Himachal Pradesh": "17",
-  Jharkhand: "81",
-  Karnataka: "56",
-  Kerala: "67",
-  "Madhya Pradesh": "45",
-  Maharashtra: "41",
-  Manipur: "79",
-  Meghalaya: "79",
-  Mizoram: "79",
-  Nagaland: "79",
-  Odisha: "75",
-  Punjab: "14",
-  Rajasthan: "30",
-  Sikkim: "73",
-  "Tamil Nadu": "61",
-  Telangana: "50",
-  Tripura: "79",
-  Uttarakhand: "24",
-  "Uttar Pradesh": "20",
-  "West Bengal": "70",
-  "Andaman and Nicobar Islands": "74",
-  Chandigarh: "16",
-  "Dadra and Nagar Haveli and Daman and Diu": "39",
-  Delhi: "11",
-  "Jammu and Kashmir": "18",
-  Ladakh: "18",
-  Lakshadweep: "68",
-  Puducherry: "60",
+const STATE_PIN_CODES = {
+  "Andhra Pradesh": "5100",
+  "Tamil Nadu": "6100",
 };
 
 function getStatePinCode(state) {
@@ -64,15 +29,13 @@ function getStatePinCode(state) {
     try {
       const parsed = JSON.parse(envMap);
       if (parsed?.[state]) {
-        return String(parsed[state]).padStart(2, "0").slice(0, 2) + "00";
+        return String(parsed[state]);
       }
     } catch (error) {
       console.warn("Invalid REGISTRATION_STATE_PIN_MAP JSON.", error);
     }
   }
-
-  const code = STATE_CODE_MAP[state] || "00";
-  return `${code}00`;
+  return STATE_PIN_CODES[state] || "0000";
 }
 
 function getGenderPrefix(gender) {
@@ -179,7 +142,6 @@ export async function addUserData(data) {
     city,
     referralCode: referralCode || "",
     paymentStatus: "unpaid",
-    paymentReference: "",
     mid: "",
     createdAt: now,
     updatedAt: now,
@@ -246,9 +208,11 @@ export async function completeUserPayment({ registrationId, paymentReference }) 
   const mid = `${basePrefix}${String(nextSequence).padStart(4, "0")}`;
 
   row.set("paymentStatus", "paid");
-  row.set("paymentReference", paymentReference || "");
   row.set("mid", mid);
   row.set("updatedAt", new Date().toISOString());
+  if (paymentReference) {
+    row.set("referralCode", String(row.get("referralCode") || paymentReference));
+  }
 
   await row.save();
 
