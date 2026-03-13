@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { addUserData } from "@/lib/server/userService";
+import { completeUserPayment } from "@/lib/server/userService";
 
 export const runtime = "nodejs";
 
 export async function POST(request) {
   try {
     const payload = await request.json();
-    const response = await addUserData(payload);
+    const response = await completeUserPayment(payload);
 
     return NextResponse.json(response, {
       status: response.success ? 200 : 400,
