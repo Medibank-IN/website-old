@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { INDIA_STATE_CITY_MAP, INDIAN_STATES } from "@/lib/indiaLocations";
@@ -96,6 +97,7 @@ const inputClass =
   "w-full rounded-xl border border-[#ddd9f5] bg-[#faf9ff] px-4 py-3 text-sm outline-none transition duration-300 placeholder:text-[#79778f] focus:border-[#7b1fa2] focus:ring-2 focus:ring-[#7b1fa2]/20";
 
 export default function UserRegistrationPage() {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
 
@@ -126,9 +128,31 @@ export default function UserRegistrationPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const onSubmit = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setSubmitMessage("Registration details validated successfully.");
+  const onSubmit = async (formValues) => {
+    setSubmitMessage("");
+
+    const response = await fetch("/api/user/addUserdataToSheet", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formValues),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      setSubmitMessage(result.message || "Registration failed. Please try again.");
+      return;
+    }
+
+    const query = new URLSearchParams({
+      registrationId: result.data.registrationId,
+      fullName: result.data.fullName,
+      email: result.data.email,
+    });
+
+    router.push(`/payment?${query.toString()}`);
   };
 
   return (
@@ -215,7 +239,7 @@ export default function UserRegistrationPage() {
                   <option value="">Select</option>
                   <option value="female">Female</option>
                   <option value="male">Male</option>
-                  <option value="other">Other</option>
+                  <option value="transgender">Transgender</option>
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#7b1fa2] transition group-focus-within:rotate-180" />
               </div>
@@ -315,7 +339,7 @@ export default function UserRegistrationPage() {
               {isSubmitting ? "Validating..." : "Register"}
             </button>
 
-            {submitMessage && <p className="sm:col-span-2 text-sm font-medium text-emerald-600">{submitMessage}</p>}
+            {submitMessage && <p className="sm:col-span-2 text-sm font-medium text-red-600">{submitMessage}</p>}
           </form>
         </div>
       </section>
