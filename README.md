@@ -58,9 +58,11 @@ SMSCOUNTRY_ENTITY_ID=
 SMSCOUNTRY_BASE_URL=https://restapi.smscountry.com
 SMSCOUNTRY_SEND_PATH=/v0.1/Accounts/${SMSCOUNTRY_ACCOUNT_ID}/SMSes/
 SMSCOUNTRY_AUTH_HEADER=
+SMSCOUNTRY_AUTH_SCHEME=Basic
+SMSCOUNTRY_AUTH_ENCODE_BASE64=false
 SMSCOUNTRY_OTP_MESSAGE=Your OTP for registration is {{OTP}}. It expires in 5 minutes. Do not share this code.
 OTP_EXPIRY_SECONDS=300
 OTP_MAX_ATTEMPTS=5
 ```
 
-> Note: Provide either `SMSCOUNTRY_AUTH_HEADER` **or** (`SMSCOUNTRY_AUTH_KEY` + `SMSCOUNTRY_AUTH_TOKEN`).
+> Note: Provide either `SMSCOUNTRY_AUTH_HEADER` **or** (`SMSCOUNTRY_AUTH_KEY` + `SMSCOUNTRY_AUTH_TOKEN`). By default, this project sends `Authorization: Basic <authKey>:<authToken>` (plain, not base64) to match SMSCountry REST API examples. Set `SMSCOUNTRY_AUTH_ENCODE_BASE64=true` only if your account specifically requires base64 encoding.
