@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { INDIA_STATE_CITY_MAP, INDIAN_STATES } from "@/lib/indiaLocations";
+import { INDIAN_STATES } from "@/lib/indiaLocations";
 
 function HeroWaveBackground() {
   return (
@@ -103,9 +103,7 @@ export default function UserRegistrationPage() {
 
   const {
     register,
-    watch,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -120,8 +118,6 @@ export default function UserRegistrationPage() {
     },
   });
 
-  const selectedState = watch("state");
-  const cityOptions = useMemo(() => INDIA_STATE_CITY_MAP[selectedState] || [], [selectedState]);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowForm(true), 3000);
@@ -189,7 +185,7 @@ export default function UserRegistrationPage() {
 
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className={`grid overflow-hidden rounded-2xl bg-white p-2 transition-all duration-700 ease-out sm:grid-cols-2 ${
+            className={`grid gap-x-4 gap-y-3 overflow-hidden rounded-2xl bg-white p-2 transition-all duration-700 ease-out sm:grid-cols-2 ${
               showForm ? "max-h-[1200px] translate-y-0 opacity-100" : "pointer-events-none max-h-0 translate-y-6 opacity-0"
             }`}
           >
@@ -229,7 +225,7 @@ export default function UserRegistrationPage() {
               {errors.dob && <p className="mt-1 text-xs text-red-500">{errors.dob.message}</p>}
             </div>
 
-            <div>
+            <div className="mt-2 sm:mt-0">
               <label className="mb-1 block text-sm text-[#2b2b43]">Sex / Gender</label>
               <div className="group relative">
                 <select
@@ -246,7 +242,7 @@ export default function UserRegistrationPage() {
               {errors.gender && <p className="mt-1 text-xs text-red-500">{errors.gender.message}</p>}
             </div>
 
-            <div>
+            <div className="sm:col-span-2">
               <label className="mb-1 block text-sm text-[#2b2b43]">Mobile Number</label>
               <input
                 className={`${inputClass} ${errors.mobile ? "border-red-400 focus:border-red-500 focus:ring-red-200" : ""}`}
@@ -260,7 +256,7 @@ export default function UserRegistrationPage() {
               {errors.mobile && <p className="mt-1 text-xs text-red-500">{errors.mobile.message}</p>}
             </div>
 
-            <div>
+            <div className="sm:col-span-2">
               <label className="mb-1 block text-sm text-[#2b2b43]">Email</label>
               <input
                 className={`${inputClass} ${errors.email ? "border-red-400 focus:border-red-500 focus:ring-red-200" : ""}`}
@@ -275,13 +271,23 @@ export default function UserRegistrationPage() {
             </div>
 
             <div>
+              <label className="mb-1 block text-sm text-[#2b2b43]">City / Town</label>
+              <input
+                className={`${inputClass} ${errors.city ? "border-red-400 focus:border-red-500 focus:ring-red-200" : ""}`}
+                type="text"
+                placeholder="Enter city or town"
+                {...register("city", { required: "Please enter your city." })}
+              />
+              {errors.city && <p className="mt-1 text-xs text-red-500">{errors.city.message}</p>}
+            </div>
+
+            <div>
               <label className="mb-1 block text-sm text-[#2b2b43]">State</label>
               <div className="group relative">
                 <select
                   className={`${inputClass} appearance-none pr-10 ${errors.state ? "border-red-400 focus:border-red-500 focus:ring-red-200" : ""}`}
                   {...register("state", {
                     required: "Please select your state.",
-                    onChange: () => setValue("city", ""),
                   })}
                 >
                   <option value="">Select state</option>
@@ -307,28 +313,6 @@ export default function UserRegistrationPage() {
                 })}
               />
               {errors.referralCode && <p className="mt-1 text-xs text-red-500">{errors.referralCode.message}</p>}
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm text-[#2b2b43]">City / Town</label>
-              <div className="group relative">
-                <select
-                  disabled={!selectedState}
-                  className={`${inputClass} appearance-none pr-10 disabled:cursor-not-allowed disabled:opacity-70 ${
-                    errors.city ? "border-red-400 focus:border-red-500 focus:ring-red-200" : ""
-                  }`}
-                  {...register("city", { required: "Please select your city." })}
-                >
-                  <option value="">{selectedState ? "Select city" : "Select state first"}</option>
-                  {cityOptions.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#7b1fa2] transition group-focus-within:rotate-180" />
-              </div>
-              {errors.city && <p className="mt-1 text-xs text-red-500">{errors.city.message}</p>}
             </div>
 
             <button
