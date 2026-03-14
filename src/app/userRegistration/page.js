@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { INDIAN_STATES } from "@/lib/indiaLocations";
 
@@ -311,10 +311,9 @@ export default function UserRegistrationPage() {
 
             <div>
               <label className="mb-1 block text-sm text-[#2b2b43]">DOB</label>
-              <div className="relative">
-                <CalendarDays className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#7b1fa2]" />
+              <div>
                 <input
-                  className={`${inputClass} pr-9 ${errors.dob ? "border-red-400 focus:border-red-500 focus:ring-red-200" : ""}`}
+                  className={`${inputClass} ${errors.dob ? "border-red-400 focus:border-red-500 focus:ring-red-200" : ""}`}
                   type="date"
                   max={new Date().toISOString().split("T")[0]}
                   {...register("dob", {
