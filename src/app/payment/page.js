@@ -1,17 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function PaymentPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState("");
+  const [registrationId, setRegistrationId] = useState("");
+  const [fullName, setFullName] = useState("User");
+  const [email, setEmail] = useState("");
 
-  const registrationId = searchParams.get("registrationId") || "";
-  const fullName = searchParams.get("fullName") || "User";
-  const email = searchParams.get("email") || "";
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    setRegistrationId(params.get("registrationId") || "");
+    setFullName(params.get("fullName") || "User");
+    setEmail(params.get("email") || "");
+  }, []);
 
   const paymentReference = useMemo(() => `TXN-${Date.now()}`, []);
 
