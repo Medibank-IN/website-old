@@ -29,6 +29,7 @@ const sectionTitleClass = "sm:col-span-2 mt-6 border-b border-[#ece8fb] pb-2 tex
 export default function DoctorRegistrationPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState(true);
   const [availabilitySchedule, setAvailabilitySchedule] = useState(createAvailabilityState);
 
   const { register, watch, control, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm({
@@ -83,7 +84,36 @@ export default function DoctorRegistrationPage() {
   const primaryQualificationState = watch("qualifications.0.state");
   const primaryCityOptions = useMemo(() => INDIA_STATE_CITY_MAP[primaryQualificationState] || [], [primaryQualificationState]);
 
-  const onSubmit = async () => { await new Promise((resolve) => setTimeout(resolve, 800)); setSubmitMessage("Doctor registration details validated successfully."); };
+  const onSubmit = async (formData) => {
+    setSubmitMessage("");
+    setSubmitSuccess(true);
+
+    const payload = {
+      ...formData,
+      availabilitySchedule,
+    };
+
+    try {
+      const response = await fetch("/api/user/addDoctordataToSheet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || "Failed to submit doctor details.");
+      }
+
+      setSubmitSuccess(true);
+      setSubmitMessage("Doctor details submitted successfully.");
+    } catch (error) {
+      setSubmitSuccess(false);
+      setSubmitMessage(error.message || "Failed to submit doctor details.");
+    }
+  };
 
   return (<main className="relative overflow-hidden bg-gradient-to-b from-[#eef4ff] via-[#f8eefe] to-white px-4 py-12 md:py-20"><HeroWaveBackground />
     <div className="pointer-events-none absolute inset-0"><div className="absolute -left-20 top-16 h-56 w-56 rounded-full bg-[#d81b60]/20 blur-3xl" /><div className="absolute -right-16 bottom-8 h-64 w-64 rounded-full bg-[#3b0aa3]/20 blur-3xl" /></div>
@@ -131,7 +161,7 @@ export default function DoctorRegistrationPage() {
         <label className="sm:col-span-2 flex items-center gap-3 text-sm text-[#2b2b43]"><input type="checkbox" className="size-4 accent-[#7b1fa2]" {...register("agreePrivacy", { required: "You must agree to Privacy Policy." })} /> I agree to Privacy Policy</label>{errors.agreePrivacy && <p className="sm:col-span-2 -mt-2 text-xs text-red-500">{errors.agreePrivacy.message}</p>}
         <label className="sm:col-span-2 flex items-center gap-3 text-sm text-[#2b2b43]"><input type="checkbox" className="size-4 accent-[#7b1fa2]" {...register("verificationConsent")} /> Consent to share registration details for verification</label>
         <button type="submit" disabled={isSubmitting} className="sm:col-span-2 mt-3 rounded-xl bg-gradient-to-r from-[#d81b60] via-[#7b1fa2] to-[#3b0aa3] px-6 py-3 text-base font-aptos-extrabold text-white shadow-[0_12px_30px_rgba(123,31,162,0.35)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(216,27,96,0.4)] disabled:opacity-70">{isSubmitting ? "Validating..." : "Create Doctor Account"}</button>
-        {submitMessage && <p className="sm:col-span-2 text-sm font-medium text-emerald-600">{submitMessage}</p>}
+        {submitMessage && <p className={`sm:col-span-2 text-sm font-medium ${submitSuccess ? "text-emerald-600" : "text-red-500"}`}>{submitMessage}</p>}
       </form></section></main>
   );
 }

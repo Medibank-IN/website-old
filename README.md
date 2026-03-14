@@ -44,6 +44,7 @@ Create a `.env.local` file and add the following keys:
 GOOGLE_CLIENT_EMAIL=
 GOOGLE_PRIVATE_KEY=
 GOOGLE_SHEET_ID=
+DOCTOR_SHEET_TITLE=Doctor Data
 REGISTRATION_STATE_PIN_MAP={"Andhra Pradesh":"5100","Tamil Nadu":"6100"}
 
 # SMSCountry OTP integration

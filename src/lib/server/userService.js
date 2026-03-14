@@ -18,6 +18,33 @@ const HEADER_VALUES = [
   "updatedAt",
 ];
 
+const DOCTOR_SHEET_TITLE = process.env.DOCTOR_SHEET_TITLE || "Doctor Data";
+const DOCTOR_HEADER_VALUES = [
+  "doctorRegistrationId",
+  "fullLegalName",
+  "preferredName",
+  "dob",
+  "email",
+  "mobile",
+  "emergencyMobile",
+  "primaryLicenseId",
+  "specialization",
+  "yearsOfExperience",
+  "consultationType",
+  "clinicName",
+  "consultationFees",
+  "languagesSpoken",
+  "registrations",
+  "qualifications",
+  "availabilitySchedule",
+  "agreeTerms",
+  "agreePrivacy",
+  "verificationConsent",
+  "rawPayload",
+  "createdAt",
+  "updatedAt",
+];
+
 const STATE_PIN_CODES = {
   "Andhra Pradesh": "5100",
   "Tamil Nadu": "6100",
@@ -58,6 +85,21 @@ function createRegistrationId() {
 }
 
 async function getSheet() {
+  return getOrCreateSheet({
+    sheetTitle: SHEET_TITLE,
+    fallbackIndex: 0,
+    headerValues: HEADER_VALUES,
+  });
+}
+
+async function getDoctorSheet() {
+  return getOrCreateSheet({
+    sheetTitle: DOCTOR_SHEET_TITLE,
+    headerValues: DOCTOR_HEADER_VALUES,
+  });
+}
+
+async function getOrCreateSheet({ sheetTitle, headerValues, fallbackIndex }) {
   const serviceAccountAuth = new JWT({
     email: process.env.GOOGLE_CLIENT_EMAIL,
     key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
@@ -67,9 +109,13 @@ async function getSheet() {
   const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, serviceAccountAuth);
   await doc.loadInfo();
 
-  let sheet = doc.sheetsByIndex[0];
+  let sheet = doc.sheetsByTitle[sheetTitle];
+  if (!sheet && Number.isInteger(fallbackIndex)) {
+    sheet = doc.sheetsByIndex[fallbackIndex];
+  }
+
   if (!sheet) {
-    sheet = await doc.addSheet({ title: SHEET_TITLE, headerValues: HEADER_VALUES });
+    sheet = await doc.addSheet({ title: sheetTitle, headerValues });
   }
 
   let headers = [];
@@ -86,11 +132,24 @@ async function getSheet() {
     }
   }
 
-  if (shouldSetHeaders || !HEADER_VALUES.every((header) => headers.includes(header))) {
-    await sheet.setHeaderRow(HEADER_VALUES);
+  if (shouldSetHeaders || !headerValues.every((header) => headers.includes(header))) {
+    await sheet.setHeaderRow(headerValues);
   }
 
   return sheet;
+}
+
+function createDoctorRegistrationId() {
+  const now = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `DOC-${now}-${random}`;
+}
+
+function stringifyValue(value) {
+  if (Array.isArray(value) || (value && typeof value === "object")) {
+    return JSON.stringify(value);
+  }
+  return String(value || "");
 }
 
 async function getRows(sheet) {
@@ -224,6 +283,52 @@ export async function completeUserPayment({ registrationId, paymentReference }) 
       paymentStatus: "paid",
       mid,
       paymentReference: paymentReference || "",
+    },
+  };
+}
+
+export async function addDoctorData(data) {
+  const sheet = await getDoctorSheet();
+
+  const doctorRegistrationId = createDoctorRegistrationId();
+  const now = new Date().toISOString();
+
+  const doctorData = {
+    doctorRegistrationId,
+    fullLegalName: String(data.fullLegalName || ""),
+    preferredName: String(data.preferredName || ""),
+    dob: String(data.dob || ""),
+    email: normalizeEmail(data.email),
+    mobile: normalizeMobile(data.mobile),
+    emergencyMobile: normalizeMobile(data.emergencyMobile),
+    primaryLicenseId: String(data.primaryLicenseId || ""),
+    specialization: String(data.specialization || ""),
+    yearsOfExperience: String(data.yearsOfExperience || ""),
+    consultationType: String(data.consultationType || ""),
+    clinicName: String(data.clinicName || ""),
+    consultationFees: String(data.consultationFees || ""),
+    languagesSpoken: String(data.languagesSpoken || ""),
+    registrations: stringifyValue(data.registrations),
+    qualifications: stringifyValue(data.qualifications),
+    availabilitySchedule: stringifyValue(data.availabilitySchedule),
+    agreeTerms: String(Boolean(data.agreeTerms)),
+    agreePrivacy: String(Boolean(data.agreePrivacy)),
+    verificationConsent: String(Boolean(data.verificationConsent)),
+    rawPayload: JSON.stringify(data),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await sheet.addRow(doctorData);
+
+  return {
+    success: true,
+    message: "Doctor data added successfully.",
+    data: {
+      doctorRegistrationId,
+      fullLegalName: doctorData.fullLegalName,
+      email: doctorData.email,
+      mobile: doctorData.mobile,
     },
   };
 }
