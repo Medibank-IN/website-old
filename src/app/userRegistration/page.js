@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -100,10 +99,18 @@ export default function UserRegistrationPage() {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerifiedMobile, setOtpVerifiedMobile] = useState("");
+  const [otpMessage, setOtpMessage] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -124,8 +131,106 @@ export default function UserRegistrationPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  const mobileValue = watch("mobile");
+
+  useEffect(() => {
+    const normalizedMobile = String(mobileValue || "").replace(/\D/g, "").slice(-10);
+    if (otpVerifiedMobile && normalizedMobile !== otpVerifiedMobile) {
+      setOtpVerifiedMobile("");
+      setOtpSent(false);
+      setOtp("");
+      setOtpMessage("");
+      setOtpError("Mobile number changed. Please verify the new number.");
+    }
+  }, [mobileValue, otpVerifiedMobile]);
+
+  const sendOtp = async () => {
+    setOtpMessage("");
+    setOtpError("");
+
+    const normalizedMobile = String(mobileValue || "").replace(/\D/g, "").slice(-10);
+    if (!/^[6-9]\d{9}$/.test(normalizedMobile)) {
+      setOtpError("Enter a valid 10-digit Indian mobile number before requesting OTP.");
+      return;
+    }
+
+    try {
+      setIsSendingOtp(true);
+      const response = await fetch("/api/user/sendOtp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mobile: normalizedMobile }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setOtpError(result.message || "Unable to send OTP.");
+        return;
+      }
+
+      setOtpSent(true);
+      setOtpVerifiedMobile("");
+      setOtp("");
+      setOtpMessage("OTP sent to your mobile number.");
+    } catch (_error) {
+      setOtpError("Unable to send OTP right now. Please try again.");
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    setOtpMessage("");
+    setOtpError("");
+
+    const normalizedMobile = String(mobileValue || "").replace(/\D/g, "").slice(-10);
+    if (!otpSent) {
+      setOtpError("Request OTP before verification.");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(String(otp || "").trim())) {
+      setOtpError("Enter a valid 6-digit OTP.");
+      return;
+    }
+
+    try {
+      setIsVerifyingOtp(true);
+      const response = await fetch("/api/user/verifyOtp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mobile: normalizedMobile, otp: String(otp).trim() }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setOtpError(result.message || "OTP verification failed.");
+        return;
+      }
+
+      setOtpVerifiedMobile(normalizedMobile);
+      setOtpMessage("Mobile number verified successfully.");
+    } catch (_error) {
+      setOtpError("Unable to verify OTP right now. Please try again.");
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
   const onSubmit = async (formValues) => {
     setSubmitMessage("");
+
+    const normalizedMobile = String(formValues.mobile || "").replace(/\D/g, "").slice(-10);
+    if (otpVerifiedMobile !== normalizedMobile) {
+      setSubmitMessage("Please complete mobile OTP verification before proceeding to payment.");
+      return;
+    }
 
     const response = await fetch("/api/user/addUserdataToSheet", {
       method: "POST",
@@ -244,16 +349,51 @@ export default function UserRegistrationPage() {
 
             <div className="sm:col-span-2">
               <label className="mb-1 block text-sm text-[#2b2b43]">Mobile Number</label>
-              <input
-                className={`${inputClass} ${errors.mobile ? "border-red-400 focus:border-red-500 focus:ring-red-200" : ""}`}
-                type="tel"
-                placeholder="10-digit mobile number"
-                {...register("mobile", {
-                  required: "Mobile number is required.",
-                  pattern: { value: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number." },
-                })}
-              />
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <input
+                  className={`${inputClass} ${errors.mobile ? "border-red-400 focus:border-red-500 focus:ring-red-200" : ""}`}
+                  type="tel"
+                  placeholder="10-digit mobile number"
+                  {...register("mobile", {
+                    required: "Mobile number is required.",
+                    pattern: { value: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number." },
+                  })}
+                />
+                <button
+                  type="button"
+                  onClick={sendOtp}
+                  disabled={isSendingOtp}
+                  className="rounded-xl border border-[#cabaf8] px-4 py-3 text-sm font-semibold text-[#5f2bb3] transition hover:bg-[#f3edff] disabled:opacity-60"
+                >
+                  {isSendingOtp ? "Sending..." : otpSent ? "Resend OTP" : "Send OTP"}
+                </button>
+              </div>
               {errors.mobile && <p className="mt-1 text-xs text-red-500">{errors.mobile.message}</p>}
+
+              {otpSent && (
+                <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    className={inputClass}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="Enter 6-digit OTP"
+                  />
+                  <button
+                    type="button"
+                    onClick={verifyOtp}
+                    disabled={isVerifyingOtp}
+                    className="rounded-xl border border-[#cabaf8] px-4 py-3 text-sm font-semibold text-[#5f2bb3] transition hover:bg-[#f3edff] disabled:opacity-60"
+                  >
+                    {isVerifyingOtp ? "Verifying..." : "Verify OTP"}
+                  </button>
+                </div>
+              )}
+
+              {otpError && <p className="mt-1 text-xs text-red-500">{otpError}</p>}
+              {otpMessage && <p className="mt-1 text-xs text-[#2e7d32]">{otpMessage}</p>}
             </div>
 
             <div className="sm:col-span-2">

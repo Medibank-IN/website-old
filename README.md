@@ -34,3 +34,33 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## Environment Variables
+
+Create a `.env.local` file and add the following keys:
+
+```bash
+# Existing integrations
+GOOGLE_CLIENT_EMAIL=
+GOOGLE_PRIVATE_KEY=
+GOOGLE_SHEET_ID=
+REGISTRATION_STATE_PIN_MAP={"Andhra Pradesh":"5100","Tamil Nadu":"6100"}
+
+# SMSCountry OTP integration
+SMSCOUNTRY_ACCOUNT_ID=
+SMSCOUNTRY_AUTH_KEY=
+SMSCOUNTRY_AUTH_TOKEN=
+SMSCOUNTRY_SENDER_ID=
+
+# Optional (use if your SMSCountry setup requires DLT data / custom endpoint)
+SMSCOUNTRY_TEMPLATE_ID=
+SMSCOUNTRY_ENTITY_ID=
+SMSCOUNTRY_BASE_URL=https://restapi.smscountry.com
+SMSCOUNTRY_SEND_PATH=/v0.1/Accounts/${SMSCOUNTRY_ACCOUNT_ID}/SMSes/
+SMSCOUNTRY_AUTH_HEADER=
+SMSCOUNTRY_OTP_MESSAGE=Your OTP for registration is {{OTP}}. It expires in 5 minutes. Do not share this code.
+OTP_EXPIRY_SECONDS=300
+OTP_MAX_ATTEMPTS=5
+```
+
+> Note: Provide either `SMSCOUNTRY_AUTH_HEADER` **or** (`SMSCOUNTRY_AUTH_KEY` + `SMSCOUNTRY_AUTH_TOKEN`).
