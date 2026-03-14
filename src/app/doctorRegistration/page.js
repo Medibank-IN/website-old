@@ -17,14 +17,21 @@ function HeroWaveBackground() {
   );
 }
 
+const WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+const createDaySlot = () => ({ start: "", end: "" });
+
+const createAvailabilityState = () => WEEK_DAYS.map((day) => ({ day, enabled: false, slots: [createDaySlot()] }));
+
 const inputClass = "w-full rounded-xl border border-[#ddd9f5] bg-[#faf9ff] px-4 py-3 text-sm outline-none transition duration-300 placeholder:text-[#79778f] focus:border-[#7b1fa2] focus:ring-2 focus:ring-[#7b1fa2]/20";
 const sectionTitleClass = "sm:col-span-2 mt-6 border-b border-[#ece8fb] pb-2 text-lg font-aptos-extrabold text-[#3b0aa3]";
 
 export default function DoctorRegistrationPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [availabilitySchedule, setAvailabilitySchedule] = useState(createAvailabilityState);
 
-  const { register, watch, control, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+  const { register, watch, control, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
       registrations: [{ registrationId: "", authorityName: "", state: "", year: "" }],
       qualifications: [{ degree: "", specialization: "", college: "", country: "", state: "", city: "", completionYear: "" }],
@@ -35,6 +42,43 @@ export default function DoctorRegistrationPage() {
   const { fields: qualificationFields, append: appendQualification, remove: removeQualification } = useFieldArray({ name: "qualifications", control });
 
   useEffect(() => { const timer = setTimeout(() => setShowForm(true), 3000); return () => clearTimeout(timer); }, []);
+
+  useEffect(() => {
+    setValue("availabilitySchedule", JSON.stringify(availabilitySchedule));
+  }, [availabilitySchedule, setValue]);
+
+  const toggleDayAvailability = (dayIndex) => {
+    setAvailabilitySchedule((previous) => previous.map((daySchedule, index) => {
+      if (index !== dayIndex) return daySchedule;
+      return {
+        ...daySchedule,
+        enabled: !daySchedule.enabled,
+        slots: daySchedule.enabled ? [createDaySlot()] : daySchedule.slots,
+      };
+    }));
+  };
+
+  const addDaySlot = (dayIndex) => {
+    setAvailabilitySchedule((previous) => previous.map((daySchedule, index) => index === dayIndex ? { ...daySchedule, slots: [...daySchedule.slots, createDaySlot()] } : daySchedule));
+  };
+
+  const removeDaySlot = (dayIndex, slotIndex) => {
+    setAvailabilitySchedule((previous) => previous.map((daySchedule, index) => {
+      if (index !== dayIndex) return daySchedule;
+      if (daySchedule.slots.length === 1) return daySchedule;
+      return { ...daySchedule, slots: daySchedule.slots.filter((_, idx) => idx !== slotIndex) };
+    }));
+  };
+
+  const updateDaySlot = (dayIndex, slotIndex, field, value) => {
+    setAvailabilitySchedule((previous) => previous.map((daySchedule, index) => {
+      if (index !== dayIndex) return daySchedule;
+      return {
+        ...daySchedule,
+        slots: daySchedule.slots.map((slot, idx) => idx === slotIndex ? { ...slot, [field]: value } : slot),
+      };
+    }));
+  };
 
   const primaryQualificationState = watch("qualifications.0.state");
   const primaryCityOptions = useMemo(() => INDIA_STATE_CITY_MAP[primaryQualificationState] || [], [primaryQualificationState]);
@@ -81,7 +125,7 @@ export default function DoctorRegistrationPage() {
         {qualificationFields.map((field, index) => { const selectedState = watch(`qualifications.${index}.state`); const cityOptions = index === 0 ? primaryCityOptions : INDIA_STATE_CITY_MAP[selectedState] || []; return (<div key={field.id} className="sm:col-span-2 rounded-2xl border border-[#ece8fb] p-4"><div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-aptos-bold text-[#3b0aa3]">Qualification #{index + 1}</h3>{qualificationFields.length > 1 && <button type="button" className="rounded-lg p-2 text-[#d81b60] hover:bg-[#fce5f0]" onClick={() => removeQualification(index)}><Trash2 size={16} /></button>}</div><div className="grid gap-4 sm:grid-cols-2"><input className={inputClass} placeholder="Degree" {...register(`qualifications.${index}.degree`, { required: "Degree is required." })} /><input className={inputClass} placeholder="Specialization" {...register(`qualifications.${index}.specialization`, { required: "Specialization is required." })} /><input className={inputClass} placeholder="University / College" {...register(`qualifications.${index}.college`, { required: "Medical college name is required." })} /><input className={inputClass} placeholder="Country" {...register(`qualifications.${index}.country`)} /><div className="group relative"><select className={`${inputClass} appearance-none pr-10`} {...register(`qualifications.${index}.state`)}><option value="">State</option>{INDIAN_STATES.map((state) => <option key={state} value={state}>{state}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#7b1fa2]" /></div><div className="group relative"><select className={`${inputClass} appearance-none pr-10`} disabled={!selectedState} {...register(`qualifications.${index}.city`)}><option value="">{selectedState ? "City" : "Select state first"}</option>{cityOptions.map((city) => <option key={city} value={city}>{city}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#7b1fa2]" /></div><input className={inputClass} type="number" placeholder="Completion Year" {...register(`qualifications.${index}.completionYear`, { required: "Completion year is required." })} /></div></div>); })}
         <button type="button" className="sm:col-span-2 inline-flex items-center gap-2 justify-self-start rounded-xl border border-[#cabaf8] px-4 py-2 text-sm font-semibold text-[#5f2bb3] hover:bg-[#f3edff]" onClick={() => appendQualification({ degree: "", specialization: "", college: "", country: "", state: "", city: "", completionYear: "" })}><Plus size={15} /> Add More Qualifications</button>
         <h2 className={sectionTitleClass}>4. Professional Details</h2>
-        <input className={inputClass} placeholder="Specialization" {...register("specialization")} /><input className={inputClass} type="number" placeholder="Years of Experience" {...register("yearsOfExperience")} /><div className="group relative"><select className={`${inputClass} appearance-none pr-10`} {...register("consultationType")}><option value="">Consultation Type</option><option value="online">Online</option><option value="offline">Offline</option><option value="both">Both</option></select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#7b1fa2]" /></div><input className={inputClass} placeholder="Clinic / Hospital Name" {...register("clinicName")} /><input className={inputClass} type="number" placeholder="Consultation Fees" {...register("consultationFees")} /><input className={inputClass} placeholder="Languages Spoken" {...register("languagesSpoken")} /><textarea className={`${inputClass} sm:col-span-2 min-h-28`} placeholder="Availability Schedule" {...register("availabilitySchedule")} />
+        <input className={inputClass} placeholder="Specialization" {...register("specialization")} /><input className={inputClass} type="number" placeholder="Years of Experience" {...register("yearsOfExperience")} /><div className="group relative"><select className={`${inputClass} appearance-none pr-10`} {...register("consultationType")}><option value="">Consultation Type</option><option value="online">Online</option><option value="offline">Offline</option><option value="both">Both</option></select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#7b1fa2]" /></div><input className={inputClass} placeholder="Clinic / Hospital Name" {...register("clinicName")} /><input className={inputClass} type="number" placeholder="Consultation Fees" {...register("consultationFees")} /><input className={inputClass} placeholder="Languages Spoken" {...register("languagesSpoken")} /><input type="hidden" {...register("availabilitySchedule")} /><div className="sm:col-span-2 space-y-3 rounded-2xl border border-[#ece8fb] bg-[#faf9ff] p-4"><p className="text-sm font-aptos-bold text-[#3b0aa3]">Availability Schedule</p><p className="text-xs text-[#5f5b7a]">Choose available days and add one or more consultation slots for each day.</p><div className="space-y-3">{availabilitySchedule.map((daySchedule, dayIndex) => (<div key={daySchedule.day} className="rounded-xl border border-[#e3ddfa] bg-white p-3"><div className="flex flex-wrap items-center justify-between gap-3"><label className="inline-flex items-center gap-2 text-sm font-aptos-bold text-[#2f2063]"><input type="checkbox" className="size-4 accent-[#7b1fa2]" checked={daySchedule.enabled} onChange={() => toggleDayAvailability(dayIndex)} />{daySchedule.day}</label>{daySchedule.enabled && <button type="button" className="inline-flex items-center gap-1 rounded-lg border border-[#cabaf8] px-3 py-1 text-xs font-semibold text-[#5f2bb3] hover:bg-[#f3edff]" onClick={() => addDaySlot(dayIndex)}><Plus size={14} /> Add Slot</button>}</div>{daySchedule.enabled && <div className="mt-3 space-y-2">{daySchedule.slots.map((slot, slotIndex) => (<div key={`${daySchedule.day}-${slotIndex}`} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]"><input type="time" className={inputClass} value={slot.start} onChange={(event) => updateDaySlot(dayIndex, slotIndex, "start", event.target.value)} /><input type="time" className={inputClass} value={slot.end} onChange={(event) => updateDaySlot(dayIndex, slotIndex, "end", event.target.value)} /><button type="button" className="inline-flex items-center justify-center rounded-xl border border-[#f4c3d7] px-3 py-2 text-[#d81b60] hover:bg-[#fce5f0] disabled:cursor-not-allowed disabled:opacity-40" disabled={daySchedule.slots.length === 1} onClick={() => removeDaySlot(dayIndex, slotIndex)}><Trash2 size={15} /></button></div>))}</div>}</div>))}</div></div>
         <h2 className={sectionTitleClass}>6. Consent & Compliance</h2>
         <label className="sm:col-span-2 flex items-center gap-3 text-sm text-[#2b2b43]"><input type="checkbox" className="size-4 accent-[#7b1fa2]" {...register("agreeTerms", { required: "You must agree to Terms & Conditions." })} /> I agree to Terms & Conditions</label>{errors.agreeTerms && <p className="sm:col-span-2 -mt-2 text-xs text-red-500">{errors.agreeTerms.message}</p>}
         <label className="sm:col-span-2 flex items-center gap-3 text-sm text-[#2b2b43]"><input type="checkbox" className="size-4 accent-[#7b1fa2]" {...register("agreePrivacy", { required: "You must agree to Privacy Policy." })} /> I agree to Privacy Policy</label>{errors.agreePrivacy && <p className="sm:col-span-2 -mt-2 text-xs text-red-500">{errors.agreePrivacy.message}</p>}
