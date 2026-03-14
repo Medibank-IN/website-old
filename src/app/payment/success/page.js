@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function PaymentSuccessPage() {
-  const searchParams = useSearchParams();
-  const registrationId = searchParams.get("registrationId") || "";
-  const mid = searchParams.get("mid") || "";
-  const paymentReference = searchParams.get("paymentReference") || "";
+  const [registrationId, setRegistrationId] = useState("");
+  const [mid, setMid] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    setRegistrationId(params.get("registrationId") || "");
+    setMid(params.get("mid") || "");
+    setPaymentReference(params.get("paymentReference") || "");
+  }, []);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#eefbea] to-white px-4 py-16">
