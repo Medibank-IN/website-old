@@ -32,10 +32,14 @@ export default function DoctorRegistrationPage() {
   const [submitSuccess, setSubmitSuccess] = useState(true);
   const [availabilitySchedule, setAvailabilitySchedule] = useState(createAvailabilityState);
 
-  const { register, watch, control, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm({
+  const defaultFormValues = {
+    registrations: [{ registrationId: "", authorityName: "", state: "", year: "" }],
+    qualifications: [{ degree: "", specialization: "", college: "", country: "", state: "", city: "", completionYear: "" }],
+  };
+
+  const { register, watch, control, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
-      registrations: [{ registrationId: "", authorityName: "", state: "", year: "" }],
-      qualifications: [{ degree: "", specialization: "", college: "", country: "", state: "", city: "", completionYear: "" }],
+      ...defaultFormValues,
     },
   });
 
@@ -109,6 +113,9 @@ export default function DoctorRegistrationPage() {
 
       setSubmitSuccess(true);
       setSubmitMessage("Doctor details submitted successfully.");
+      window.alert("Doctor details submitted successfully.");
+      reset(defaultFormValues);
+      setAvailabilitySchedule(createAvailabilityState());
     } catch (error) {
       setSubmitSuccess(false);
       setSubmitMessage(error.message || "Failed to submit doctor details.");
