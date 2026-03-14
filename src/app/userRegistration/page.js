@@ -239,7 +239,7 @@ export default function UserRegistrationPage() {
                   <option value="">Select</option>
                   <option value="female">Female</option>
                   <option value="male">Male</option>
-                  <option value="transgender">Transgender</option>
+                  <option value="Third Gender">Third Gender</option>
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#7b1fa2] transition group-focus-within:rotate-180" />
               </div>
