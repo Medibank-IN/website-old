@@ -69,4 +69,5 @@ OTP_MAX_ATTEMPTS=5
 > Notes:
 > - Provide either `SMSCOUNTRY_AUTH_HEADER` **or** (`SMSCOUNTRY_AUTH_KEY` + `SMSCOUNTRY_AUTH_TOKEN`).
 > - If your account expects form payloads, set `SMSCOUNTRY_REQUEST_FORMAT=form`.
-> - Keep `SMSCOUNTRY_SEND_PATH` aligned with your SMSCountry account configuration.
+> - By default, the app targets `/v0.1/Accounts/{SMSCOUNTRY_AUTH_KEY}/SMSes/RequestAttributes` from SMSCountry docs.
+> - Keep `SMSCOUNTRY_SEND_PATH` aligned with your SMSCountry account configuration (override only when SMSCountry provides a different endpoint).
