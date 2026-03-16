@@ -1,5 +1,20 @@
 const DEFAULT_BASE_URL = "https://restapi.smscountry.com";
 
+function normalizePhoneNumber(mobile) {
+  const digits = String(mobile || "").replace(/\D/g, "");
+  const countryCode = String(process.env.SMSCOUNTRY_COUNTRY_CODE || "91").replace(/\D/g, "");
+
+  if (digits.length === 10) {
+    return `${countryCode}${digits}`;
+  }
+
+  if (digits.length > 10 && digits.endsWith(digits.slice(-10))) {
+    return digits;
+  }
+
+  return digits;
+}
+
 function resolveTemplateVariables(value, variables) {
   if (!value) {
     return value;
@@ -21,6 +36,14 @@ function getRequiredEnv(name) {
   return value;
 }
 
+function ensureNoUnresolvedTemplate(pathValue) {
+  if (!pathValue || /\$\{[^}]+\}/.test(pathValue)) {
+    throw new Error(
+      "SMSCOUNTRY_SEND_PATH contains unresolved variables. Ensure required env vars like SMSCOUNTRY_AUTH_KEY or SMSCOUNTRY_ACCOUNT_ID are set."
+    );
+  }
+}
+
 function buildAuthorizationHeader() {
   const explicitHeader = process.env.SMSCOUNTRY_AUTH_HEADER;
   if (explicitHeader) {
@@ -38,13 +61,20 @@ function buildAuthorizationHeader() {
 }
 
 export async function sendOtpSms({ mobile, otp }) {
-  const accountId = getRequiredEnv("SMSCOUNTRY_ACCOUNT_ID");
+  const accountId = process.env.SMSCOUNTRY_ACCOUNT_ID;
+  const authKey = process.env.SMSCOUNTRY_AUTH_KEY;
   const senderId = getRequiredEnv("SMSCOUNTRY_SENDER_ID");
   const baseUrl = process.env.SMSCOUNTRY_BASE_URL || DEFAULT_BASE_URL;
-  const rawSendPath = process.env.SMSCOUNTRY_SEND_PATH || "/v0.1/Accounts/${SMSCOUNTRY_ACCOUNT_ID}/SMSes/";
+  const rawSendPath =
+    process.env.SMSCOUNTRY_SEND_PATH ||
+    "/v0.1/Accounts/${SMSCOUNTRY_AUTH_KEY}/SMSes/RequestAttributes";
   const sendPath = resolveTemplateVariables(rawSendPath, {
     SMSCOUNTRY_ACCOUNT_ID: accountId,
+    SMSCOUNTRY_AUTH_KEY: authKey,
   });
+
+  ensureNoUnresolvedTemplate(sendPath);
+
   const url = `${baseUrl.replace(/\/$/, "")}${sendPath}`;
 
   const messageTemplate = process.env.SMSCOUNTRY_OTP_MESSAGE || "Your OTP for registration is {{OTP}}. It expires in 5 minutes. Do not share this code.";
@@ -52,7 +82,7 @@ export async function sendOtpSms({ mobile, otp }) {
 
   const payload = {
     Text: message,
-    Number: String(mobile).trim(),
+    Number: normalizePhoneNumber(mobile),
     SenderId: senderId,
   };
 
@@ -64,13 +94,22 @@ export async function sendOtpSms({ mobile, otp }) {
     payload.EntityId = process.env.SMSCOUNTRY_ENTITY_ID;
   }
 
+  const requestFormat = String(process.env.SMSCOUNTRY_REQUEST_FORMAT || "json").toLowerCase();
+  const isFormEncoded = requestFormat === "form" || requestFormat === "x-www-form-urlencoded";
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": isFormEncoded ? "application/x-www-form-urlencoded" : "application/json",
       Authorization: buildAuthorizationHeader(),
     },
-    body: JSON.stringify(payload),
+    body: isFormEncoded
+      ? new URLSearchParams(
+          Object.entries(payload)
+            .filter(([, value]) => value !== undefined && value !== null && value !== "")
+            .map(([key, value]) => [key, String(value)])
+        ).toString()
+      : JSON.stringify(payload),
   });
 
   const rawText = await response.text();
