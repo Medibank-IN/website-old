@@ -103,8 +103,10 @@ export async function sendOtpSms({ mobile, otp }) {
 
   const url = buildSmsCountryUrl(baseUrl, sendPath);
 
-  const messageTemplate = process.env.SMSCOUNTRY_OTP_MESSAGE || "Your OTP for registration is {{OTP}}. It expires in 5 minutes. Do not share this code.";
-  const message = messageTemplate.replace(/\{\{OTP\}\}/g, otp);
+  const messageTemplate =
+    process.env.SMSCOUNTRY_OTP_MESSAGE ||
+    "Dear User, {OTP} is the OTP for New user registration on the Charak HealthTech app";
+  const message = messageTemplate.replace(/\{\{?OTP\}?\}/g, otp);
 
   const payload = {
     Text: message,
