@@ -24,17 +24,6 @@ function buildSendPath() {
   return `/v0.1/Accounts/${authKey}/SMSes/RequestAttributes`;
 }
 
-function buildAuthorizationHeader() {
-  const explicitHeader = process.env.SMSCOUNTRY_AUTH_HEADER;
-  if (explicitHeader) {
-    return explicitHeader;
-  }
-
-  const authKey = getRequiredEnv("SMSCOUNTRY_AUTH_KEY");
-  const authToken = getRequiredEnv("SMSCOUNTRY_AUTH_TOKEN");
-  return `Basic ${Buffer.from(`${authKey}:${authToken}`).toString("base64")}`;
-}
-
 function buildSmsCountryUrl(baseUrl, pathOrUrl) {
   if (/^https?:\/\//i.test(pathOrUrl)) {
     return pathOrUrl;
@@ -51,7 +40,6 @@ function buildSmsCountryUrl(baseUrl, pathOrUrl) {
 export async function sendOtpSms({ mobile, otp }) {
   const baseUrl = process.env.SMSCOUNTRY_BASE_URL || DEFAULT_BASE_URL;
   const url = buildSmsCountryUrl(baseUrl, buildSendPath());
-  const authorizationHeader = buildAuthorizationHeader();
 
   const messageTemplate =
     process.env.SMSCOUNTRY_OTP_MESSAGE ||
@@ -68,7 +56,6 @@ export async function sendOtpSms({ mobile, otp }) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: authorizationHeader,
     },
     body: JSON.stringify(payload),
   });
