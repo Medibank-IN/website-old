@@ -48,20 +48,27 @@ DOCTOR_SHEET_TITLE=Doctor Data
 REGISTRATION_STATE_PIN_MAP={"Andhra Pradesh":"5100","Tamil Nadu":"6100"}
 
 # SMSCountry OTP integration
-SMSCOUNTRY_ACCOUNT_ID=
 SMSCOUNTRY_AUTH_KEY=
 SMSCOUNTRY_AUTH_TOKEN=
 SMSCOUNTRY_SENDER_ID=
 
 # Optional (use if your SMSCountry setup requires DLT data / custom endpoint)
+SMSCOUNTRY_ACCOUNT_ID=
 SMSCOUNTRY_TEMPLATE_ID=
 SMSCOUNTRY_ENTITY_ID=
+SMSCOUNTRY_COUNTRY_CODE=91
 SMSCOUNTRY_BASE_URL=https://restapi.smscountry.com
-SMSCOUNTRY_SEND_PATH=/v0.1/Accounts/${SMSCOUNTRY_ACCOUNT_ID}/SMSes/
+SMSCOUNTRY_SEND_PATH=/v0.1/Accounts/${SMSCOUNTRY_AUTH_KEY}/SMSes/RequestAttributes
+SMSCOUNTRY_REQUEST_FORMAT=json
+SMSCOUNTRY_TOOL=API
 SMSCOUNTRY_AUTH_HEADER=
 SMSCOUNTRY_OTP_MESSAGE=Your OTP for registration is {{OTP}}. It expires in 5 minutes. Do not share this code.
 OTP_EXPIRY_SECONDS=300
 OTP_MAX_ATTEMPTS=5
 ```
 
-> Note: Provide either `SMSCOUNTRY_AUTH_HEADER` **or** (`SMSCOUNTRY_AUTH_KEY` + `SMSCOUNTRY_AUTH_TOKEN`).
+> Notes:
+> - Provide either `SMSCOUNTRY_AUTH_HEADER` **or** (`SMSCOUNTRY_AUTH_KEY` + `SMSCOUNTRY_AUTH_TOKEN`).
+> - `Authorization` header is optional for URL-auth-key flows; if key+token are not set, the request is sent without it.
+> - If your account expects form payloads, set `SMSCOUNTRY_REQUEST_FORMAT=form`.
+> - If `SMSCOUNTRY_SEND_PATH` ends with `/SMSes/`, the app auto-appends `/RequestAttributes`.
