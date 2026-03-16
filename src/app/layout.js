@@ -16,9 +16,9 @@ const outfit = Outfit({
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       
-      <body className={outfit.className}>
+      <body className={outfit.className} suppressHydrationWarning>
         <Header/>
           {children}
         <Footer/>
