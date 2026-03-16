@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { consumeVerifiedEmail, consumeVerifiedMobile } from "@/lib/server/otpStore";
 import { addDoctorData } from "@/lib/server/userService";
 
 export const runtime = "nodejs";
@@ -7,6 +8,23 @@ export const runtime = "nodejs";
 export async function POST(request) {
   try {
     const payload = await request.json();
+
+    const mobileVerified = consumeVerifiedMobile(payload.mobile);
+    if (!mobileVerified) {
+      return NextResponse.json({
+        success: false,
+        message: "Please verify your mobile number with OTP before continuing.",
+      }, { status: 400 });
+    }
+
+    const emailVerified = consumeVerifiedEmail(payload.email);
+    if (!emailVerified) {
+      return NextResponse.json({
+        success: false,
+        message: "Please verify your email with OTP before continuing.",
+      }, { status: 400 });
+    }
+
     const response = await addDoctorData(payload);
 
     return NextResponse.json(response, {
