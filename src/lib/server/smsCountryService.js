@@ -19,30 +19,9 @@ function getRequiredEnv(name) {
   return value;
 }
 
-function resolveAccountPathAuthKey() {
-  const encodedAuthKey = process.env.SMSCOUNTRY_AUTH_KEY_BASE64;
-  if (encodedAuthKey) {
-    return encodedAuthKey;
-  }
-
-  const authKey = getRequiredEnv("SMSCOUNTRY_AUTH_KEY");
-  return Buffer.from(authKey).toString("base64");
-}
-
 function buildSendPath() {
-  const accountPathAuthKey = resolveAccountPathAuthKey();
-  return `/v0.1/Accounts/${accountPathAuthKey}/SMSes/`;
-}
-
-function buildAuthorizationHeader() {
-  const explicitHeader = process.env.SMSCOUNTRY_AUTH_HEADER;
-  if (explicitHeader) {
-    return explicitHeader;
-  }
-
   const authKey = getRequiredEnv("SMSCOUNTRY_AUTH_KEY");
-  const authToken = getRequiredEnv("SMSCOUNTRY_AUTH_TOKEN");
-  return `Basic ${Buffer.from(`${authKey}:${authToken}`).toString("base64")}`;
+  return `/v0.1/Accounts/${authKey}/SMSes/RequestAttributes`;
 }
 
 function buildSmsCountryUrl(baseUrl, pathOrUrl) {
@@ -61,7 +40,6 @@ function buildSmsCountryUrl(baseUrl, pathOrUrl) {
 export async function sendOtpSms({ mobile, otp }) {
   const baseUrl = process.env.SMSCOUNTRY_BASE_URL || DEFAULT_BASE_URL;
   const url = buildSmsCountryUrl(baseUrl, buildSendPath());
-  const authorizationHeader = buildAuthorizationHeader();
 
   const messageTemplate =
     process.env.SMSCOUNTRY_OTP_MESSAGE ||
@@ -78,8 +56,6 @@ export async function sendOtpSms({ mobile, otp }) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: authorizationHeader,
     },
     body: JSON.stringify(payload),
   });
@@ -97,7 +73,6 @@ export async function sendOtpSms({ mobile, otp }) {
     const headerEntries = Object.fromEntries(response.headers.entries());
     console.error("SMSCountry error status:", response.status);
     console.error("SMSCountry error headers:", headerEntries);
-    console.error("SMSCountry request url:", url);
     console.error("SMSCountry error data:", parsedResponse);
     throw new Error(
       `SMSCountry OTP send failed (${response.status}): ${typeof parsedResponse === "string" ? parsedResponse : JSON.stringify(parsedResponse)}`
