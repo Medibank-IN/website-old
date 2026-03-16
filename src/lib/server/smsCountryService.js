@@ -44,20 +44,6 @@ function ensureNoUnresolvedTemplate(pathValue) {
   }
 }
 
-function normalizeSendPath(pathValue) {
-  const trimmed = String(pathValue || "").trim();
-
-  if (!trimmed) {
-    return trimmed;
-  }
-
-  if (/\/SMSes\/?$/i.test(trimmed)) {
-    return `${trimmed.replace(/\/$/, "")}/RequestAttributes`;
-  }
-
-  return trimmed;
-}
-
 function buildAuthorizationHeader() {
   const explicitHeader = process.env.SMSCOUNTRY_AUTH_HEADER;
   if (explicitHeader) {
@@ -82,11 +68,10 @@ export async function sendOtpSms({ mobile, otp }) {
   const rawSendPath =
     process.env.SMSCOUNTRY_SEND_PATH ||
     "/v0.1/Accounts/${SMSCOUNTRY_AUTH_KEY}/SMSes/RequestAttributes";
-  const resolvedSendPath = resolveTemplateVariables(rawSendPath, {
+  const sendPath = resolveTemplateVariables(rawSendPath, {
     SMSCOUNTRY_ACCOUNT_ID: accountId,
     SMSCOUNTRY_AUTH_KEY: authKey,
   });
-  const sendPath = normalizeSendPath(resolvedSendPath);
 
   ensureNoUnresolvedTemplate(sendPath);
 
@@ -113,18 +98,12 @@ export async function sendOtpSms({ mobile, otp }) {
   const requestFormat = String(process.env.SMSCOUNTRY_REQUEST_FORMAT || "json").toLowerCase();
   const isFormEncoded = requestFormat === "form" || requestFormat === "x-www-form-urlencoded";
 
-  const authorizationHeader = buildAuthorizationHeader();
-  const headers = {
-    "Content-Type": isFormEncoded ? "application/x-www-form-urlencoded" : "application/json",
-  };
-
-  if (authorizationHeader) {
-    headers.Authorization = authorizationHeader;
-  }
-
   const response = await fetch(url, {
     method: "POST",
-    headers,
+    headers: {
+      "Content-Type": isFormEncoded ? "application/x-www-form-urlencoded" : "application/json",
+      Authorization: buildAuthorizationHeader(),
+    },
     body: isFormEncoded
       ? new URLSearchParams(
           Object.entries(payload)
