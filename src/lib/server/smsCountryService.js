@@ -54,7 +54,7 @@ function buildAuthorizationHeader() {
   const authToken = process.env.SMSCOUNTRY_AUTH_TOKEN;
 
   if (!authKey || !authToken) {
-    throw new Error("Missing SMSCountry auth credentials. Set SMSCOUNTRY_AUTH_HEADER or SMSCOUNTRY_AUTH_KEY and SMSCOUNTRY_AUTH_TOKEN.");
+    return null;
   }
 
   return `Basic ${Buffer.from(`${authKey}:${authToken}`).toString("base64")}`;
@@ -84,6 +84,7 @@ export async function sendOtpSms({ mobile, otp }) {
     Text: message,
     Number: normalizePhoneNumber(mobile),
     SenderId: senderId,
+    Tool: process.env.SMSCOUNTRY_TOOL || "API",
   };
 
   if (process.env.SMSCOUNTRY_TEMPLATE_ID) {
