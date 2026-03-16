@@ -17,12 +17,15 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const emailVerified = consumeVerifiedEmail(payload.email);
-    if (!emailVerified) {
-      return NextResponse.json({
-        success: false,
-        message: "Please verify your email with OTP before continuing.",
-      }, { status: 400 });
+    const normalizedEmail = String(payload.email || "").trim();
+    if (normalizedEmail) {
+      const emailVerified = consumeVerifiedEmail(normalizedEmail);
+      if (!emailVerified) {
+        return NextResponse.json({
+          success: false,
+          message: "Please verify your email with OTP before continuing, or submit without email.",
+        }, { status: 400 });
+      }
     }
 
     const response = await addDoctorData(payload);
