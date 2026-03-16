@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createEmailOtpSession } from "@/lib/server/otpStore";
+import { sendEmailOtpMail } from "@/lib/server/emailOtpService";
 
 export const runtime = "nodejs";
 
@@ -13,8 +14,7 @@ export async function POST(request) {
       return NextResponse.json(session, { status: 400 });
     }
 
-    // TODO: Hook this up to an email provider when credentials are available.
-    console.log(`Email OTP for ${session.email}: ${session.otp}`);
+    await sendEmailOtpMail({ email: session.email, otp: session.otp });
 
     return NextResponse.json({
       success: true,
