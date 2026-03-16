@@ -24,6 +24,20 @@ export default function DoctorRegistrationPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(true);
+  const [mobileOtp, setMobileOtp] = useState("");
+  const [mobileOtpSent, setMobileOtpSent] = useState(false);
+  const [mobileOtpVerified, setMobileOtpVerified] = useState("");
+  const [mobileOtpMessage, setMobileOtpMessage] = useState("");
+  const [mobileOtpError, setMobileOtpError] = useState("");
+  const [isSendingMobileOtp, setIsSendingMobileOtp] = useState(false);
+  const [isVerifyingMobileOtp, setIsVerifyingMobileOtp] = useState(false);
+  const [emailOtp, setEmailOtp] = useState("");
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [emailOtpVerified, setEmailOtpVerified] = useState("");
+  const [emailOtpMessage, setEmailOtpMessage] = useState("");
+  const [emailOtpError, setEmailOtpError] = useState("");
+  const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
+  const [isVerifyingEmailOtp, setIsVerifyingEmailOtp] = useState(false);
 
   const {
     register,
@@ -55,14 +69,212 @@ export default function DoctorRegistrationPage() {
   }, []);
 
   const primaryQualificationState = watch("qualifications.0.state");
+  const mobileValue = watch("mobile");
+  const emailValue = watch("email");
   const primaryCityOptions = useMemo(
     () => INDIA_STATE_CITY_MAP[primaryQualificationState] || [],
     [primaryQualificationState],
   );
 
+  useEffect(() => {
+    const normalizedMobile = String(mobileValue || "").replace(/\D/g, "").slice(-10);
+    if (mobileOtpVerified && normalizedMobile !== mobileOtpVerified) {
+      setMobileOtpVerified("");
+      setMobileOtpSent(false);
+      setMobileOtp("");
+      setMobileOtpMessage("");
+      setMobileOtpError("Mobile number changed. Please verify the new number.");
+    }
+  }, [mobileValue, mobileOtpVerified]);
+
+  useEffect(() => {
+    const normalizedEmail = String(emailValue || "").trim().toLowerCase();
+    if (emailOtpVerified && normalizedEmail !== emailOtpVerified) {
+      setEmailOtpVerified("");
+      setEmailOtpSent(false);
+      setEmailOtp("");
+      setEmailOtpMessage("");
+      setEmailOtpError("Email changed. Please verify again if you want to submit a verified email.");
+    }
+  }, [emailValue, emailOtpVerified]);
+
+  const sendMobileOtp = async () => {
+    setMobileOtpMessage("");
+    setMobileOtpError("");
+
+    const normalizedMobile = String(mobileValue || "").replace(/\D/g, "").slice(-10);
+    if (!/^[6-9]\d{9}$/.test(normalizedMobile)) {
+      setMobileOtpError("Enter a valid 10-digit Indian mobile number before requesting OTP.");
+      return;
+    }
+
+    try {
+      setIsSendingMobileOtp(true);
+      const response = await fetch("/api/user/sendOtp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mobile: normalizedMobile }),
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result?.success) {
+        setMobileOtpError(result?.message || "Unable to send OTP.");
+        return;
+      }
+
+      setMobileOtpSent(true);
+      setMobileOtp("");
+      setMobileOtpVerified("");
+      setMobileOtpMessage("OTP sent to your mobile number.");
+    } catch (_error) {
+      setMobileOtpError("Unable to send OTP right now. Please try again.");
+    } finally {
+      setIsSendingMobileOtp(false);
+    }
+  };
+
+  const verifyMobileOtp = async () => {
+    setMobileOtpMessage("");
+    setMobileOtpError("");
+
+    const normalizedMobile = String(mobileValue || "").replace(/\D/g, "").slice(-10);
+    if (!mobileOtpSent) {
+      setMobileOtpError("Request OTP before verification.");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(String(mobileOtp || "").trim())) {
+      setMobileOtpError("Enter a valid 6-digit OTP.");
+      return;
+    }
+
+    try {
+      setIsVerifyingMobileOtp(true);
+      const response = await fetch("/api/user/verifyOtp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mobile: normalizedMobile, otp: String(mobileOtp).trim() }),
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result?.success) {
+        setMobileOtpError(result?.message || "OTP verification failed.");
+        return;
+      }
+
+      setMobileOtpVerified(normalizedMobile);
+      setMobileOtpMessage("Mobile number verified successfully.");
+    } catch (_error) {
+      setMobileOtpError("Unable to verify OTP right now. Please try again.");
+    } finally {
+      setIsVerifyingMobileOtp(false);
+    }
+  };
+
+  const sendEmailOtp = async () => {
+    setEmailOtpMessage("");
+    setEmailOtpError("");
+
+    const normalizedEmail = String(emailValue || "").trim().toLowerCase();
+    if (!normalizedEmail) {
+      setEmailOtpError("Enter an email address before requesting OTP.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setEmailOtpError("Enter a valid email address before requesting OTP.");
+      return;
+    }
+
+    try {
+      setIsSendingEmailOtp(true);
+      const response = await fetch("/api/user/sendEmailOtp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result?.success) {
+        setEmailOtpError(result?.message || "Unable to send email OTP.");
+        return;
+      }
+
+      setEmailOtpSent(true);
+      setEmailOtp("");
+      setEmailOtpVerified("");
+      setEmailOtpMessage("OTP sent to your email address.");
+    } catch (_error) {
+      setEmailOtpError("Unable to send email OTP right now. Please try again.");
+    } finally {
+      setIsSendingEmailOtp(false);
+    }
+  };
+
+  const verifyEmailOtp = async () => {
+    setEmailOtpMessage("");
+    setEmailOtpError("");
+
+    const normalizedEmail = String(emailValue || "").trim().toLowerCase();
+    if (!emailOtpSent) {
+      setEmailOtpError("Request OTP before verification.");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(String(emailOtp || "").trim())) {
+      setEmailOtpError("Enter a valid 6-digit OTP.");
+      return;
+    }
+
+    try {
+      setIsVerifyingEmailOtp(true);
+      const response = await fetch("/api/user/verifyEmailOtp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: normalizedEmail, otp: String(emailOtp).trim() }),
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result?.success) {
+        setEmailOtpError(result?.message || "Email OTP verification failed.");
+        return;
+      }
+
+      setEmailOtpVerified(normalizedEmail);
+      setEmailOtpMessage("Email verified successfully.");
+    } catch (_error) {
+      setEmailOtpError("Unable to verify email OTP right now. Please try again.");
+    } finally {
+      setIsVerifyingEmailOtp(false);
+    }
+  };
+
   const onSubmit = async (formData) => {
     setSubmitMessage("");
     setSubmitSuccess(true);
+
+    const normalizedMobile = String(formData.mobile || "").replace(/\D/g, "").slice(-10);
+    const normalizedEmail = String(formData.email || "").trim().toLowerCase();
+
+    if (mobileOtpVerified !== normalizedMobile) {
+      setSubmitSuccess(false);
+      setSubmitMessage("Please complete mobile OTP verification before submitting doctor registration.");
+      return;
+    }
+
+    if (normalizedEmail && emailOtpVerified !== normalizedEmail) {
+      setSubmitSuccess(false);
+      setSubmitMessage("Please verify your email with OTP or clear the email field to continue.");
+      return;
+    }
 
     try {
       const response = await fetch("/api/user/addDoctordataToSheet", {
@@ -129,8 +341,35 @@ export default function DoctorRegistrationPage() {
 
           <div className="sm:col-span-2">
             <label className="mb-1 block text-sm text-[#2b2b43]">Email</label>
-            <input className={inputClass} type="email" placeholder="Enter Email" {...register("email", { required: "Email is required." })} />
+            <input className={inputClass} type="email" placeholder="Enter Email (Optional)" {...register("email")} />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={sendEmailOtp} disabled={isSendingEmailOtp} className="rounded-lg border border-[#cabaf8] px-3 py-2 text-xs font-semibold text-[#5f2bb3] hover:bg-[#f3edff] disabled:opacity-60">
+                {isSendingEmailOtp ? "Sending..." : emailOtpSent ? "Resend Email OTP" : "Send Email OTP"}
+              </button>
+              {emailOtpVerified === String(emailValue || "").trim().toLowerCase() && String(emailValue || "").trim() && (
+                <span className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">Email verified</span>
+              )}
+            </div>
+            {emailOtpSent && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <input
+                  className="max-w-[220px] rounded-lg border border-[#ddd9f5] bg-[#faf9ff] px-3 py-2 text-xs outline-none focus:border-[#7b1fa2]"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Enter Email OTP"
+                  value={emailOtp}
+                  onChange={(event) => setEmailOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                />
+                <button type="button" onClick={verifyEmailOtp} disabled={isVerifyingEmailOtp} className="rounded-lg bg-[#5f2bb3] px-3 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60">
+                  {isVerifyingEmailOtp ? "Verifying..." : "Verify Email OTP"}
+                </button>
+              </div>
+            )}
+            {emailOtpMessage && <p className="mt-2 text-xs text-emerald-600">{emailOtpMessage}</p>}
+            {emailOtpError && <p className="mt-2 text-xs text-red-500">{emailOtpError}</p>}
+            <p className="mt-1 text-xs text-[#6e648f]">Email OTP verification is optional.</p>
           </div>
 
           <h2 className={sectionTitleClass}>2. Registration Details</h2>
@@ -171,6 +410,33 @@ export default function DoctorRegistrationPage() {
             <label className="mb-1 block text-sm text-[#2b2b43]">Mobile Number</label>
             <input className={inputClass} type="tel" placeholder="Enter 10 digit number" {...register("mobile", { required: "Mobile number is required." })} />
             {errors.mobile && <p className="mt-1 text-xs text-red-500">{errors.mobile.message}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={sendMobileOtp} disabled={isSendingMobileOtp} className="rounded-lg border border-[#cabaf8] px-3 py-2 text-xs font-semibold text-[#5f2bb3] hover:bg-[#f3edff] disabled:opacity-60">
+                {isSendingMobileOtp ? "Sending..." : mobileOtpSent ? "Resend Mobile OTP" : "Send Mobile OTP"}
+              </button>
+              {mobileOtpVerified === String(mobileValue || "").replace(/\D/g, "").slice(-10) && (
+                <span className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">Mobile verified</span>
+              )}
+            </div>
+            {mobileOtpSent && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <input
+                  className="max-w-[220px] rounded-lg border border-[#ddd9f5] bg-[#faf9ff] px-3 py-2 text-xs outline-none focus:border-[#7b1fa2]"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Enter Mobile OTP"
+                  value={mobileOtp}
+                  onChange={(event) => setMobileOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                />
+                <button type="button" onClick={verifyMobileOtp} disabled={isVerifyingMobileOtp} className="rounded-lg bg-[#5f2bb3] px-3 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60">
+                  {isVerifyingMobileOtp ? "Verifying..." : "Verify Mobile OTP"}
+                </button>
+              </div>
+            )}
+            {mobileOtpMessage && <p className="mt-2 text-xs text-emerald-600">{mobileOtpMessage}</p>}
+            {mobileOtpError && <p className="mt-2 text-xs text-red-500">{mobileOtpError}</p>}
+            <p className="mt-1 text-xs text-[#6e648f]">Mobile OTP verification is mandatory.</p>
           </div>
           <div>
             <label className="mb-1 block text-sm text-[#2b2b43]">Emergency Mob No (Optional)</label>
