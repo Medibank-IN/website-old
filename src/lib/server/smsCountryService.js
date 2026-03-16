@@ -60,6 +60,19 @@ function buildAuthorizationHeader() {
   return `Basic ${Buffer.from(`${authKey}:${authToken}`).toString("base64")}`;
 }
 
+function buildSmsCountryUrl(baseUrl, pathOrUrl) {
+  if (/^https?:\/\//i.test(pathOrUrl)) {
+    return pathOrUrl;
+  }
+
+  const normalizedBase = String(baseUrl || DEFAULT_BASE_URL).replace(/\/$/, "");
+  const normalizedPath = String(pathOrUrl || "").startsWith("/")
+    ? pathOrUrl
+    : `/${pathOrUrl}`;
+
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 export async function sendOtpSms({ mobile, otp }) {
   const accountId = process.env.SMSCOUNTRY_ACCOUNT_ID;
   const authKey = process.env.SMSCOUNTRY_AUTH_KEY;
@@ -75,7 +88,7 @@ export async function sendOtpSms({ mobile, otp }) {
 
   ensureNoUnresolvedTemplate(sendPath);
 
-  const url = `${baseUrl.replace(/\/$/, "")}${sendPath}`;
+  const url = buildSmsCountryUrl(baseUrl, sendPath);
 
   const messageTemplate = process.env.SMSCOUNTRY_OTP_MESSAGE || "Your OTP for registration is {{OTP}}. It expires in 5 minutes. Do not share this code.";
   const message = messageTemplate.replace(/\{\{OTP\}\}/g, otp);
@@ -98,12 +111,18 @@ export async function sendOtpSms({ mobile, otp }) {
   const requestFormat = String(process.env.SMSCOUNTRY_REQUEST_FORMAT || "json").toLowerCase();
   const isFormEncoded = requestFormat === "form" || requestFormat === "x-www-form-urlencoded";
 
+  const authorizationHeader = buildAuthorizationHeader();
+  const headers = {
+    "Content-Type": isFormEncoded ? "application/x-www-form-urlencoded" : "application/json",
+  };
+
+  if (authorizationHeader) {
+    headers.Authorization = authorizationHeader;
+  }
+
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": isFormEncoded ? "application/x-www-form-urlencoded" : "application/json",
-      Authorization: buildAuthorizationHeader(),
-    },
+    headers,
     body: isFormEncoded
       ? new URLSearchParams(
           Object.entries(payload)
