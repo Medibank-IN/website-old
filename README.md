@@ -51,16 +51,14 @@ REGISTRATION_STATE_PIN_MAP={"Andhra Pradesh":"5100","Tamil Nadu":"6100"}
 SMSCOUNTRY_AUTH_KEY=
 SMSCOUNTRY_AUTH_TOKEN=
 SMSCOUNTRY_SENDER_ID=
+# Optional: if SMSCountry expects base64 authKey in Accounts path, set explicitly
+SMSCOUNTRY_AUTH_KEY_BASE64=
 
-# Optional (use if your SMSCountry setup requires DLT data / custom endpoint)
-SMSCOUNTRY_ACCOUNT_ID=
-SMSCOUNTRY_TEMPLATE_ID=
-SMSCOUNTRY_ENTITY_ID=
+# Optional
 SMSCOUNTRY_COUNTRY_CODE=91
 SMSCOUNTRY_BASE_URL=https://restapi.smscountry.com
-SMSCOUNTRY_SEND_PATH=/v0.1/Accounts/${SMSCOUNTRY_AUTH_KEY}/SMSes/RequestAttributes
-SMSCOUNTRY_REQUEST_FORMAT=json
 SMSCOUNTRY_AUTH_HEADER=
+SMSCOUNTRY_TOOL=API
 SMSCOUNTRY_OTP_MESSAGE=Dear User, {OTP} is the OTP for New user registration on the Charak HealthTech app
 OTP_EXPIRY_SECONDS=300
 OTP_MAX_ATTEMPTS=5
@@ -68,6 +66,5 @@ OTP_MAX_ATTEMPTS=5
 
 > Notes:
 > - Provide either `SMSCOUNTRY_AUTH_HEADER` **or** (`SMSCOUNTRY_AUTH_KEY` + `SMSCOUNTRY_AUTH_TOKEN`).
-> - If your account expects form payloads, set `SMSCOUNTRY_REQUEST_FORMAT=form`.
-> - By default, the app targets `/v0.1/Accounts/{SMSCOUNTRY_AUTH_KEY}/SMSes/RequestAttributes` from SMSCountry docs.
-> - Keep `SMSCOUNTRY_SEND_PATH` aligned with your SMSCountry account configuration (override only when SMSCountry provides a different endpoint).
+> - OTP send target is `/v0.1/Accounts/{base64(authKey)}/SMSes/` and uses Basic auth header `base64(authKey:authToken)`.
+> - Set `SMSCOUNTRY_AUTH_KEY_BASE64` only if you already have the encoded key and want to pass it directly.
