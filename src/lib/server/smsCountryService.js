@@ -44,6 +44,27 @@ function ensureNoUnresolvedTemplate(pathValue) {
   }
 }
 
+function buildSendPath() {
+  const accountId = process.env.SMSCOUNTRY_ACCOUNT_ID;
+  const authKey = process.env.SMSCOUNTRY_AUTH_KEY;
+  const configuredPath = process.env.SMSCOUNTRY_SEND_PATH;
+
+  if (!configuredPath) {
+    const resolvedAuthKey = authKey || accountId;
+    if (!resolvedAuthKey) {
+      throw new Error(
+        "Missing required env variable: SMSCOUNTRY_AUTH_KEY (or SMSCOUNTRY_ACCOUNT_ID for legacy setup)."
+      );
+    }
+    return `/v0.1/Accounts/${resolvedAuthKey}/SMSes/RequestAttributes`;
+  }
+
+  return resolveTemplateVariables(configuredPath, {
+    SMSCOUNTRY_ACCOUNT_ID: accountId,
+    SMSCOUNTRY_AUTH_KEY: authKey || accountId,
+  });
+}
+
 function buildAuthorizationHeader() {
   const explicitHeader = process.env.SMSCOUNTRY_AUTH_HEADER;
   if (explicitHeader) {
@@ -74,24 +95,18 @@ function buildSmsCountryUrl(baseUrl, pathOrUrl) {
 }
 
 export async function sendOtpSms({ mobile, otp }) {
-  const accountId = process.env.SMSCOUNTRY_ACCOUNT_ID;
-  const authKey = process.env.SMSCOUNTRY_AUTH_KEY;
   const senderId = getRequiredEnv("SMSCOUNTRY_SENDER_ID");
   const baseUrl = process.env.SMSCOUNTRY_BASE_URL || DEFAULT_BASE_URL;
-  const rawSendPath =
-    process.env.SMSCOUNTRY_SEND_PATH ||
-    "/v0.1/Accounts/${SMSCOUNTRY_AUTH_KEY}/SMSes/RequestAttributes";
-  const sendPath = resolveTemplateVariables(rawSendPath, {
-    SMSCOUNTRY_ACCOUNT_ID: accountId,
-    SMSCOUNTRY_AUTH_KEY: authKey,
-  });
+  const sendPath = buildSendPath();
 
   ensureNoUnresolvedTemplate(sendPath);
 
   const url = buildSmsCountryUrl(baseUrl, sendPath);
 
-  const messageTemplate = process.env.SMSCOUNTRY_OTP_MESSAGE || "Your OTP for registration is {{OTP}}. It expires in 5 minutes. Do not share this code.";
-  const message = messageTemplate.replace(/\{\{OTP\}\}/g, otp);
+  const messageTemplate =
+    process.env.SMSCOUNTRY_OTP_MESSAGE ||
+    "Dear User, {OTP} is the OTP for New user registration on the Charak HealthTech app";
+  const message = messageTemplate.replace(/\{\{?OTP\}?\}/g, otp);
 
   const payload = {
     Text: message,
@@ -114,6 +129,7 @@ export async function sendOtpSms({ mobile, otp }) {
   const authorizationHeader = buildAuthorizationHeader();
   const headers = {
     "Content-Type": isFormEncoded ? "application/x-www-form-urlencoded" : "application/json",
+    Accept: "application/json",
   };
 
   if (authorizationHeader) {

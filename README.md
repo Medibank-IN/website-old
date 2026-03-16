@@ -61,7 +61,7 @@ SMSCOUNTRY_BASE_URL=https://restapi.smscountry.com
 SMSCOUNTRY_SEND_PATH=/v0.1/Accounts/${SMSCOUNTRY_AUTH_KEY}/SMSes/RequestAttributes
 SMSCOUNTRY_REQUEST_FORMAT=json
 SMSCOUNTRY_AUTH_HEADER=
-SMSCOUNTRY_OTP_MESSAGE=Your OTP for registration is {{OTP}}. It expires in 5 minutes. Do not share this code.
+SMSCOUNTRY_OTP_MESSAGE=Dear User, {OTP} is the OTP for New user registration on the Charak HealthTech app
 OTP_EXPIRY_SECONDS=300
 OTP_MAX_ATTEMPTS=5
 ```
@@ -69,4 +69,5 @@ OTP_MAX_ATTEMPTS=5
 > Notes:
 > - Provide either `SMSCOUNTRY_AUTH_HEADER` **or** (`SMSCOUNTRY_AUTH_KEY` + `SMSCOUNTRY_AUTH_TOKEN`).
 > - If your account expects form payloads, set `SMSCOUNTRY_REQUEST_FORMAT=form`.
-> - Keep `SMSCOUNTRY_SEND_PATH` aligned with your SMSCountry account configuration.
+> - By default, the app targets `/v0.1/Accounts/{SMSCOUNTRY_AUTH_KEY}/SMSes/RequestAttributes` from SMSCountry docs.
+> - Keep `SMSCOUNTRY_SEND_PATH` aligned with your SMSCountry account configuration (override only when SMSCountry provides a different endpoint).
