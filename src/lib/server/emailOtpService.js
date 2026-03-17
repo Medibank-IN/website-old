@@ -1,4 +1,4 @@
-import emailjs from "@emailjs/nodejs";
+import nodemailer from "nodemailer";
 
 function requiredEnv(name) {
   const value = String(process.env[name] || "").trim();
@@ -8,24 +8,36 @@ function requiredEnv(name) {
   return value;
 }
 
-export async function sendEmailOtpMail({ email, otp }) {
-  const serviceId = requiredEnv("EMAILJS_SERVICE_ID");
-  const templateId = requiredEnv("EMAILJS_OTP_TEMPLATE_ID");
-  const publicKey = requiredEnv("EMAILJS_PUBLIC_KEY");
-  const privateKey = requiredEnv("EMAILJS_PRIVATE_KEY");
+function createTransport() {
+  const host = requiredEnv("SMTP_HOST");
+  const port = Number(requiredEnv("SMTP_PORT"));
+  const user = requiredEnv("SMTP_USER");
+  const pass = requiredEnv("SMTP_PASS");
 
-  await emailjs.send(
-    serviceId,
-    templateId,
-    {
-      to_email: email,
-      otp,
-      app_name: "Charak HealthTech",
-      message: `${otp} is your OTP for doctor registration.`,
+  if (!Number.isFinite(port) || port <= 0) {
+    throw new Error("SMTP_PORT must be a valid positive number.");
+  }
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: {
+      user,
+      pass,
     },
-    {
-      publicKey,
-      privateKey,
-    },
-  );
+  });
+}
+
+export async function sendEmailOtpMail({ email, otp }) {
+  const transporter = createTransport();
+  const from = requiredEnv("SMTP_FROM_EMAIL");
+
+  await transporter.sendMail({
+    from,
+    to: email,
+    subject: "Your OTP for doctor registration",
+    text: `${otp} is your OTP for doctor registration on Charak HealthTech.`,
+    html: `<p><strong>${otp}</strong> is your OTP for doctor registration on Charak HealthTech.</p>`,
+  });
 }

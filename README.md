@@ -63,11 +63,12 @@ SMSCOUNTRY_OTP_MESSAGE=Dear User, {OTP} is the OTP for New user registration on 
 OTP_EXPIRY_SECONDS=300
 OTP_MAX_ATTEMPTS=5
 
-# Email OTP integration (required for doctor registration email OTP)
-EMAILJS_SERVICE_ID=
-EMAILJS_OTP_TEMPLATE_ID=
-EMAILJS_PUBLIC_KEY=
-EMAILJS_PRIVATE_KEY=
+# Email OTP integration via Nodemailer (required for doctor registration email OTP)
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM_EMAIL=
 ```
 
 > Notes:
