@@ -80,7 +80,7 @@ export default function Header() {
 								<a href="/resources#resources1">ABHA / ABDM</a>
 								<a href="/resources#resources2">Health Guides</a>
 								<a href="/resources#resources3">Blog</a>
-								<a href="/resources#resources4">Privacy policy</a>
+								<a href="/resources#resources4">Policies</a>
 							</div>
 						</div>
 						<div className="group relative">

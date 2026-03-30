@@ -158,7 +158,7 @@ export default function Footer() {
 									href="/privacy-policy"
 									className="text-white hover:text-[#5C4AFF]"
 								>
-									Privacy Policy
+									Policies
 								</Link>
 							</li>
 							<li className="m-0 p-0">

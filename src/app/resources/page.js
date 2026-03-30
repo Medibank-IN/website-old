@@ -97,7 +97,7 @@ export default function page() {
 				<div className=" flex flex-col-reverse flex-nowrap sm:py-[40px] md:flex-row rounded-[30px] justify-center items-center ">
 					<div className="text-[12px] md:text-[16px] md:w-1/2 m-auto w-full text-justify">
 						<div className="text-left text-2xl sm:text-[48px] font-semibold  py-4 sm:py-7">
-							Privacy Policy
+							Our Policies
 						</div>
 						We understand the sensitive nature of health data and peoples
 						concern around the safety of their personal data and health records.
@@ -108,7 +108,7 @@ export default function page() {
 						currently the strongest and commonly used encryption method. We have
 						also put in place multi factor authentication protocols to ensure no
 						health record or data is accessed without user permission. Our
-						privacy policy clearly explains all that a user needs to know about
+						policies clearly explains all that a user needs to know about
 						what information we collect, how we store it, use it and share it
 						with. Please click below to read more about it.
 						<div className="md:text-left sm:text-center mt-7">
