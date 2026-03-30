@@ -113,7 +113,7 @@ export default function page() {
 						with. Please click below to read more about it.
 						<div className="md:text-left sm:text-center mt-7">
 							<a
-								href="/privacy-policy"
+								href="/policies"
 								className="bg-[#6D4AFF] text-white rounded-[20px] p-3"
 							>
 								Read More

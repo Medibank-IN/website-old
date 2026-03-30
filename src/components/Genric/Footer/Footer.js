@@ -155,7 +155,7 @@ export default function Footer() {
 							</li>
 							<li className="m-0 p-0">
 								<Link
-									href="/privacy-policy"
+									href="/policies"
 									className="text-white hover:text-[#5C4AFF]"
 								>
 									Policies
