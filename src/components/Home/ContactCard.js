@@ -14,8 +14,8 @@ const ContactCard = () => {
           <div className="md:w-1/3 text-center md:text-left mb-8 md:mb-0">
             <h3 className="text-[#000339] text-[47px] font-bold mb-2">Contact Us</h3>
             <p className='text-[20px]'>MediBank</p>
-            <p className='text-[20px]'>4th Floor, Bizness Square</p>
-            <p className='text-[20px]'>Hitech City Rd, HITEC City</p>
+            <p className='text-[20px]'>WeWork-Raheja Mindspace,</p>
+            <p className='text-[20px]'>Building Number 9, Madhapur,</p>
             <p className='text-[20px]'>Hyderabad, Telangana 500081</p>
             <a href="mailto:contact@medibank.in" className="text-[20px] text-blue-600">
               contact@medibank.in
