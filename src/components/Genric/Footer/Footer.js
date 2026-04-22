@@ -196,9 +196,7 @@ export default function Footer() {
 						<h4 className="text-lg font-bold text-white mb-4">Contact</h4>
 						<ul className="space-y-2 p-0 m-0 list-none">
 							<li className="text-white">
-								<span className="font-semibold">Address:</span> 4th Floor,
-								Bizness Square, 16, Hitech City Rd, Laxmi Cyber City,
-								Whitefields, HITEC City, Hyderabad, Telangana 500081
+								<span className="font-semibold">Address:</span> WeWork-Raheja Mindspace, Building Number 9, Madhapur, Hyderabad, Telangana 500081
 							</li>
 							<li className="text-white">
 								<span className="font-semibold">Email:</span>{" "}
